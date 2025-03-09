@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
+import Layout from '@/constants/Layout';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
@@ -126,7 +127,13 @@ export default function HomeScreen() {
           
           <TouchableOpacity 
             style={[styles.quickActionCard, { backgroundColor: colors.card }]}
-            onPress={() => {/* Navigate to challenges */}}
+            onPress={() => {
+              // Navigate to practice tab with challenges selected
+              router.push({
+                pathname: '/(tabs)/practice',
+                params: { activeTab: 'challenges' }
+              });
+            }}
           >
             <ThemedView style={[styles.quickActionIcon, { backgroundColor: '#FF9800' }]}>
               <IconSymbol name="trophy.fill" size={24} color="#FFFFFF" />
@@ -201,7 +208,10 @@ export default function HomeScreen() {
               <ThemedText style={styles.leaderboardPoints}>{user.points}</ThemedText>
             </ThemedView>
           ))}
-          <TouchableOpacity style={styles.viewFullLeaderboard}>
+          <TouchableOpacity 
+            style={styles.viewFullLeaderboard}
+            onPress={() => router.push('/leaderboard')}
+          >
             <ThemedText style={[styles.viewFullLeaderboardText, { color: colors.tint }]}>
               View Full Leaderboard
             </ThemedText>
@@ -221,7 +231,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 120,
-    paddingBottom: 40,
+    paddingBottom: Layout.SAFE_BOTTOM_PADDING,
     paddingHorizontal: 16,
   },
   streakCard: {

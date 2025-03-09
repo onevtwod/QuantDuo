@@ -1,11 +1,12 @@
-import React from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { Stack } from 'expo-router';
+import React, { useState } from 'react';
+import { StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { Stack, router } from 'expo-router';
 import { BlurView } from 'expo-blur';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
+import Layout from '@/constants/Layout';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
@@ -40,6 +41,41 @@ export default function ProfileScreen() {
   
   // Calculate XP progress percentage
   const xpProgressPercent = (userData.xp / userData.xpToNextLevel) * 100;
+  
+  // Add handlers for settings buttons
+  const handleAccountSettings = () => {
+    router.push("/settings/account");
+  };
+
+  const handleNotifications = () => {
+    router.push("/settings/notifications");
+  };
+
+  const handlePrivacySecurity = () => {
+    router.push("/settings/privacy");
+  };
+
+  const handleHelpSupport = () => {
+    router.push("/settings/help");
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Log Out',
+      'Are you sure you want to log out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Log Out', 
+          style: 'destructive',
+          onPress: () => {
+            // In a real app, this would clear auth tokens and navigate to login
+            Alert.alert('Logged Out', 'You have been successfully logged out.');
+          }
+        }
+      ]
+    );
+  };
   
   return (
     <ThemedView style={styles.container}>
@@ -126,7 +162,7 @@ export default function ProfileScreen() {
             {userData.badges.map(badge => (
               <ThemedView key={badge.id} style={styles.badgeItem}>
                 <ThemedView style={styles.badgeIconContainer}>
-                  <IconSymbol name={badge.icon} size={32} color={badge.color} />
+                  <IconSymbol name={badge.icon as any} size={32} color={badge.color} />
                 </ThemedView>
                 <ThemedText style={styles.badgeName}>{badge.name}</ThemedText>
                 <ThemedText style={styles.badgeDescription}>{badge.description}</ThemedText>
@@ -135,43 +171,75 @@ export default function ProfileScreen() {
           </ThemedView>
         </ThemedView>
         
-        {/* Settings Section */}
+        {/* Settings Section - Updated with sub-menu indicators */}
         <ThemedView style={[styles.settingsContainer, { backgroundColor: colors.card }]}>
           <ThemedText style={styles.sectionTitle}>Settings</ThemedText>
           
-          <TouchableOpacity style={styles.settingsItem}>
+          <TouchableOpacity 
+            style={styles.settingsItem}
+            onPress={handleAccountSettings}
+            activeOpacity={0.7}
+          >
             <ThemedView style={styles.settingsItemIcon}>
               <IconSymbol name="person.fill" size={20} color={colors.icon} />
             </ThemedView>
-            <ThemedText style={styles.settingsItemText}>Account Settings</ThemedText>
+            <ThemedView style={styles.settingsItemContent}>
+              <ThemedText style={styles.settingsItemText}>Account Settings</ThemedText>
+              <ThemedText style={styles.settingsItemSubtext}>Profile, Email, Password</ThemedText>
+            </ThemedView>
             <IconSymbol name="chevron.right" size={16} color={colors.icon} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.settingsItem}>
+          <TouchableOpacity 
+            style={styles.settingsItem}
+            onPress={handleNotifications}
+            activeOpacity={0.7}
+          >
             <ThemedView style={styles.settingsItemIcon}>
               <IconSymbol name="bell.fill" size={20} color={colors.icon} />
             </ThemedView>
-            <ThemedText style={styles.settingsItemText}>Notifications</ThemedText>
+            <ThemedView style={styles.settingsItemContent}>
+              <ThemedText style={styles.settingsItemText}>Notifications</ThemedText>
+              <ThemedText style={styles.settingsItemSubtext}>Push, Email, Alerts</ThemedText>
+            </ThemedView>
             <IconSymbol name="chevron.right" size={16} color={colors.icon} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.settingsItem}>
+          <TouchableOpacity 
+            style={styles.settingsItem}
+            onPress={handlePrivacySecurity}
+            activeOpacity={0.7}
+          >
             <ThemedView style={styles.settingsItemIcon}>
               <IconSymbol name="lock.fill" size={20} color={colors.icon} />
             </ThemedView>
-            <ThemedText style={styles.settingsItemText}>Privacy & Security</ThemedText>
+            <ThemedView style={styles.settingsItemContent}>
+              <ThemedText style={styles.settingsItemText}>Privacy & Security</ThemedText>
+              <ThemedText style={styles.settingsItemSubtext}>2FA, Data Controls, Privacy</ThemedText>
+            </ThemedView>
             <IconSymbol name="chevron.right" size={16} color={colors.icon} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.settingsItem}>
+          <TouchableOpacity 
+            style={styles.settingsItem}
+            onPress={handleHelpSupport}
+            activeOpacity={0.7}
+          >
             <ThemedView style={styles.settingsItemIcon}>
               <IconSymbol name="questionmark.circle.fill" size={20} color={colors.icon} />
             </ThemedView>
-            <ThemedText style={styles.settingsItemText}>Help & Support</ThemedText>
+            <ThemedView style={styles.settingsItemContent}>
+              <ThemedText style={styles.settingsItemText}>Help & Support</ThemedText>
+              <ThemedText style={styles.settingsItemSubtext}>FAQs, Contact, Report Issues</ThemedText>
+            </ThemedView>
             <IconSymbol name="chevron.right" size={16} color={colors.icon} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={[styles.settingsItem, { borderBottomWidth: 0 }]}>
+          <TouchableOpacity 
+            style={[styles.settingsItem, { borderBottomWidth: 0 }]}
+            onPress={handleLogout}
+            activeOpacity={0.7}
+          >
             <ThemedView style={styles.settingsItemIcon}>
               <IconSymbol name="arrow.right.square.fill" size={20} color={colors.loss} />
             </ThemedView>
@@ -194,7 +262,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 120,
-    paddingBottom: 40,
+    paddingBottom: Layout.SAFE_BOTTOM_PADDING,
     paddingHorizontal: 16,
     gap: 16,
   },
@@ -351,9 +419,16 @@ const styles = StyleSheet.create({
     width: 24,
     alignItems: 'center',
   },
-  settingsItemText: {
+  settingsItemContent: {
     flex: 1,
+  },
+  settingsItemText: {
     fontSize: 16,
+  },
+  settingsItemSubtext: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginTop: 2,
   },
   versionText: {
     textAlign: 'center',

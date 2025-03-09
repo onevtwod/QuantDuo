@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Dimensions, View } from 'react-native';
-import { Stack } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, ScrollView, TouchableOpacity, Dimensions, View, Modal, TextInput, Alert } from 'react-native';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { BlurView } from 'expo-blur';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
+import Layout from '@/constants/Layout';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 
@@ -36,7 +37,17 @@ interface Challenge {
 export default function PracticeScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const [activeTab, setActiveTab] = useState<'strategies' | 'challenges'>('strategies');
+  const params = useLocalSearchParams();
+  
+  // Initialize activeTab state, checking for params from navigation
+  const [activeTab, setActiveTab] = useState<'strategies' | 'challenges'>(
+    params.activeTab === 'challenges' ? 'challenges' : 'strategies'
+  );
+  
+  // Add state for the new strategy modal
+  const [isNewStrategyModalVisible, setIsNewStrategyModalVisible] = useState(false);
+  const [newStrategyName, setNewStrategyName] = useState('');
+  const [newStrategyDescription, setNewStrategyDescription] = useState('');
   
   // Sample strategies data
   const [strategies, setStrategies] = useState<Strategy[]>([
@@ -114,13 +125,108 @@ export default function PracticeScreen() {
     }
   ]);
 
+  // Handle navigation to strategy details
+  const handleStrategyPress = (strategyId: string) => {
+    router.push(`/strategy/${strategyId}`);
+  };
+
+  // Handle navigation to challenge details
+  const handleChallengePress = (challengeId: string) => {
+    router.push(`/challenge/${challengeId}`);
+  };
+
+  // Handle creating a new strategy
+  const handleCreateStrategy = () => {
+    if (!newStrategyName.trim()) {
+      Alert.alert('Error', 'Please enter a strategy name');
+      return;
+    }
+
+    // Create a new strategy object
+    const newStrategy = {
+      id: `strat-${Date.now()}`,
+      name: newStrategyName,
+      description: newStrategyDescription || 'No description provided',
+      performance: {
+        returns: 0,
+        sharpe: 0,
+        drawdown: 0,
+        winRate: 0
+      },
+      tags: ['New', 'Custom']
+    };
+
+    // Add the new strategy to the list
+    setStrategies(prev => [newStrategy, ...prev]);
+    
+    // Reset form and close modal
+    setNewStrategyName('');
+    setNewStrategyDescription('');
+    setIsNewStrategyModalVisible(false);
+    
+    // Navigate to the new strategy's detail page
+    router.push(`/strategy/${newStrategy.id}`);
+  };
+
+  // Handle importing a strategy - replaced with mock implementation
+  const handleImportStrategy = () => {
+    Alert.alert(
+      'Import Strategy',
+      'Select a strategy file to import',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Choose File',
+          onPress: () => {
+            // Mock file selection - in a real app, this would use document picker
+            setTimeout(() => {
+              Alert.alert(
+                'Strategy Import',
+                'Would you like to import "example_strategy.json"?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Import',
+                    onPress: () => {
+                      // Create mock imported strategy
+                      const newStrategyId = `strat-import-${Date.now()}`;
+                      const newStrategy = {
+                        id: newStrategyId,
+                        name: 'Imported Strategy',
+                        description: 'This strategy was imported from a file',
+                        performance: {
+                          returns: 8.5,
+                          sharpe: 1.2,
+                          drawdown: 12.3,
+                          winRate: 55
+                        },
+                        tags: ['Imported', 'Custom']
+                      };
+                      
+                      // Add to strategies list
+                      setStrategies(prev => [newStrategy, ...prev]);
+                      Alert.alert('Success', 'Strategy imported successfully');
+                      
+                      // Navigate to the new strategy
+                      router.push(`/strategy/${newStrategyId}`);
+                    }
+                  }
+                ]
+              );
+            }, 500); // Simulate file selection delay
+          }
+        }
+      ]
+    );
+  };
+
   // Render a strategy card
   const renderStrategyCard = (strategy: Strategy) => {
     return (
       <TouchableOpacity
         key={strategy.id}
         style={[styles.strategyCard, { borderColor: colors.border, backgroundColor: colors.card }]}
-        onPress={() => {/* Navigate to strategy details */}}
+        onPress={() => handleStrategyPress(strategy.id)}
       >
         <ThemedText style={styles.strategyName}>{strategy.name}</ThemedText>
         <ThemedText style={styles.strategyDescription}>{strategy.description}</ThemedText>
@@ -176,7 +282,7 @@ export default function PracticeScreen() {
           backgroundColor: colors.card,
           opacity: challenge.completed ? 0.7 : 1
         }]}
-        onPress={() => {/* Navigate to challenge details */}}
+        onPress={() => handleChallengePress(challenge.id)}
       >
         {challenge.completed && (
           <ThemedView style={styles.completedBadge}>
@@ -276,7 +382,7 @@ export default function PracticeScreen() {
             <ThemedView style={styles.actionButtonContainer}>
               <TouchableOpacity 
                 style={[styles.actionButton, { backgroundColor: colors.tint }]}
-                onPress={() => {/* Navigate to create strategy */}}
+                onPress={() => setIsNewStrategyModalVisible(true)}
               >
                 <IconSymbol name="plus" size={20} color="#FFFFFF" />
                 <ThemedText style={styles.actionButtonText}>New Strategy</ThemedText>
@@ -284,7 +390,7 @@ export default function PracticeScreen() {
               
               <TouchableOpacity 
                 style={[styles.actionButton, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}
-                onPress={() => {/* Navigate to import strategy */}}
+                onPress={handleImportStrategy}
               >
                 <IconSymbol name="arrow.down.doc.fill" size={20} color={colors.tint} />
                 <ThemedText style={[styles.actionButtonText, { color: colors.text }]}>Import</ThemedText>
@@ -295,7 +401,7 @@ export default function PracticeScreen() {
             
             <TouchableOpacity 
               style={[styles.templateCard, { borderColor: colors.border, backgroundColor: colors.card }]}
-              onPress={() => {/* Navigate to templates */}}
+              onPress={() => router.push('/strategy/templates')}
             >
               <IconSymbol name="doc.on.doc.fill" size={32} color={colors.tint} />
               <ThemedText style={styles.templateTitle}>Strategy Templates</ThemedText>
@@ -315,6 +421,56 @@ export default function PracticeScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* New Strategy Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isNewStrategyModalVisible}
+        onRequestClose={() => setIsNewStrategyModalVisible(false)}
+      >
+        <ThemedView style={styles.modalOverlay}>
+          <ThemedView style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <ThemedText style={styles.modalTitle}>Create New Strategy</ThemedText>
+            
+            <ThemedText style={styles.modalLabel}>Strategy Name</ThemedText>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+              value={newStrategyName}
+              onChangeText={setNewStrategyName}
+              placeholder="Enter strategy name"
+              placeholderTextColor={colors.text + '50'}
+            />
+            
+            <ThemedText style={styles.modalLabel}>Description (optional)</ThemedText>
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border, height: 100 }]}
+              value={newStrategyDescription}
+              onChangeText={setNewStrategyDescription}
+              placeholder="Describe your strategy"
+              placeholderTextColor={colors.text + '50'}
+              multiline
+              textAlignVertical="top"
+            />
+            
+            <ThemedView style={styles.modalButtonContainer}>
+              <TouchableOpacity 
+                style={[styles.modalButton, { borderColor: colors.border }]}
+                onPress={() => setIsNewStrategyModalVisible(false)}
+              >
+                <ThemedText style={styles.modalButtonText}>Cancel</ThemedText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.modalButton, { backgroundColor: colors.tint }]}
+                onPress={handleCreateStrategy}
+              >
+                <ThemedText style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Create</ThemedText>
+              </TouchableOpacity>
+            </ThemedView>
+          </ThemedView>
+        </ThemedView>
+      </Modal>
     </ThemedView>
   );
 }
@@ -343,7 +499,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 16,
-    paddingBottom: 40,
+    paddingBottom: Layout.SAFE_BOTTOM_PADDING,
     paddingHorizontal: 16,
   },
   actionButtonContainer: {
@@ -491,5 +647,61 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
+  },
+  // New modal styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '85%',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  modalLabel: {
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+    fontSize: 14,
+  },
+  modalInput: {
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 10,
+  },
+  modalButton: {
+    borderRadius: 8,
+    padding: 12,
+    width: '48%',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 }); 

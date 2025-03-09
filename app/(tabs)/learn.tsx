@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React from 'react';
+import { StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
+import Layout from '@/constants/Layout';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useModules } from '@/context/ModuleContext';
 
 // Define the module type
 interface Module {
@@ -34,69 +36,8 @@ export default function LearnScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
   
-  // Sample modules data
-  const [modules, setModules] = useState<Module[]>([
-    {
-      id: 'quant-basics',
-      title: 'Quant Basics',
-      description: 'Learn the fundamental concepts of quantitative trading',
-      progress: 0.75,
-      icon: 'function',
-      color: '#4C9AFF',
-      lessons: [
-        { id: 'qb-1', title: 'Introduction to Quant Trading', duration: '5 min', completed: true, locked: false },
-        { id: 'qb-2', title: 'Statistics for Trading', duration: '10 min', completed: true, locked: false },
-        { id: 'qb-3', title: 'Time Series Analysis', duration: '15 min', completed: true, locked: false },
-        { id: 'qb-4', title: 'Probability Distributions', duration: '12 min', completed: false, locked: false },
-        { id: 'qb-5', title: 'Hypothesis Testing', duration: '10 min', completed: false, locked: true },
-      ]
-    },
-    {
-      id: 'financial-instruments',
-      title: 'Financial Instruments',
-      description: 'Master different financial instruments and markets',
-      progress: 0.3,
-      icon: 'chart.bar.fill',
-      color: '#00C853',
-      lessons: [
-        { id: 'fi-1', title: 'Stocks and Indices', duration: '8 min', completed: true, locked: false },
-        { id: 'fi-2', title: 'Options Basics', duration: '12 min', completed: false, locked: false },
-        { id: 'fi-3', title: 'Futures Contracts', duration: '10 min', completed: false, locked: false },
-        { id: 'fi-4', title: 'ETFs and Mutual Funds', duration: '8 min', completed: false, locked: true },
-        { id: 'fi-5', title: 'Fixed Income Securities', duration: '15 min', completed: false, locked: true },
-      ]
-    },
-    {
-      id: 'alpha-signals',
-      title: 'Alpha Signals',
-      description: 'Discover and validate alpha signals in the market',
-      progress: 0.1,
-      icon: 'waveform.path.ecg',
-      color: '#FF9800',
-      lessons: [
-        { id: 'as-1', title: 'What is Alpha?', duration: '5 min', completed: true, locked: false },
-        { id: 'as-2', title: 'Factor Models', duration: '15 min', completed: false, locked: false },
-        { id: 'as-3', title: 'Signal Processing', duration: '12 min', completed: false, locked: true },
-        { id: 'as-4', title: 'Machine Learning for Signals', duration: '20 min', completed: false, locked: true },
-        { id: 'as-5', title: 'Signal Validation', duration: '10 min', completed: false, locked: true },
-      ]
-    },
-    {
-      id: 'risk-management',
-      title: 'Risk Management',
-      description: 'Learn to manage risk in your trading strategies',
-      progress: 0,
-      icon: 'shield.fill',
-      color: '#FF3D00',
-      lessons: [
-        { id: 'rm-1', title: 'Risk Metrics', duration: '10 min', completed: false, locked: true },
-        { id: 'rm-2', title: 'Position Sizing', duration: '8 min', completed: false, locked: true },
-        { id: 'rm-3', title: 'Portfolio Optimization', duration: '15 min', completed: false, locked: true },
-        { id: 'rm-4', title: 'Drawdown Management', duration: '12 min', completed: false, locked: true },
-        { id: 'rm-5', title: 'Risk-Adjusted Returns', duration: '10 min', completed: false, locked: true },
-      ]
-    },
-  ]);
+  // Use the modules context instead of local state
+  const { modules } = useModules();
 
   const handleLessonPress = (lessonId: string, locked: boolean) => {
     if (!locked) {
@@ -105,8 +46,8 @@ export default function LearnScreen() {
   };
 
   const handleViewAllLessons = (moduleId: string) => {
-    // In a real app, this would navigate to a module detail screen
-    console.log(`View all lessons for module: ${moduleId}`);
+    // Navigate to module detail screen
+    router.push(`/module/${moduleId}`);
   };
 
   // Render a module card
@@ -247,7 +188,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 120,
-    paddingBottom: 40,
+    paddingBottom: Layout.SAFE_BOTTOM_PADDING,
     paddingHorizontal: 16,
   },
   streakContainer: {

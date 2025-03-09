@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { StyleSheet, ScrollView, TouchableOpacity, Dimensions, Image, Platform } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { BlurView } from 'expo-blur';
 
@@ -8,6 +8,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { useModules } from '@/context/ModuleContext';
 
 // Define the lesson content type
 interface LessonContent {
@@ -265,11 +266,15 @@ const lessonData: Record<string, LessonContent> = {
   }
 };
 
-export default function LessonScreen() {
+function LessonScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  
+  // Use the modules context
+  const { markLessonCompleted } = useModules();
+  
   const [lesson, setLesson] = useState<LessonContent | null>(null);
   const [quizMode, setQuizMode] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -314,8 +319,15 @@ export default function LessonScreen() {
   };
 
   const handleFinishLesson = () => {
-    // In a real app, this would update the user's progress
-    router.back();
+    if (lesson?.id) {
+      // Mark the lesson as completed using the context
+      markLessonCompleted(lesson.id);
+      
+      // Navigate back to the previous screen
+      router.back();
+    } else {
+      router.back();
+    }
   };
 
   if (!lesson) {
@@ -891,4 +903,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
   },
-}); 
+});
+
+export default LessonScreen; 
